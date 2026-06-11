@@ -122,7 +122,7 @@ public class DietPlanActivity extends AppCompatActivity {
         LinearLayout rowLayout = new LinearLayout(this);
         rowLayout.setOrientation(LinearLayout.HORIZONTAL);
         rowLayout.setPadding(32, 32, 32, 32);
-        rowLayout.setWeightSum(3f);
+        rowLayout.setWeightSum(4f); // Expanded sum weight to cleanly integrate delete layout space
 
         LinearLayout textGroup = new LinearLayout(this);
         textGroup.setOrientation(LinearLayout.VERTICAL);
@@ -144,6 +144,7 @@ public class DietPlanActivity extends AppCompatActivity {
         textGroup.addView(tvMeal);
         textGroup.addView(tvKcal);
 
+        // Edit button control
         Button btnEdit = new Button(this);
         LinearLayout.LayoutParams btnParams = new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f);
         btnEdit.setLayoutParams(btnParams);
@@ -151,14 +152,37 @@ public class DietPlanActivity extends AppCompatActivity {
         btnEdit.setTextSize(TypedValue.COMPLEX_UNIT_SP, 13);
         btnEdit.setBackgroundColor(Color.parseColor("#757575"));
         btnEdit.setTextColor(Color.WHITE);
-
         btnEdit.setOnClickListener(v -> openEntryForm(true, id));
+
+        // Delete button control
+        Button btnDelete = new Button(this);
+        LinearLayout.LayoutParams deleteParams = new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f);
+        deleteParams.setMargins(8, 0, 0, 0);
+        btnDelete.setLayoutParams(deleteParams);
+        btnDelete.setText("Delete");
+        btnDelete.setTextSize(TypedValue.COMPLEX_UNIT_SP, 13);
+        btnDelete.setBackgroundColor(Color.parseColor("#C62828"));
+        btnDelete.setTextColor(Color.WHITE);
+        btnDelete.setOnClickListener(v -> deleteMealEntry(id));
 
         rowLayout.addView(textGroup);
         rowLayout.addView(btnEdit);
+        rowLayout.addView(btnDelete);
         itemCard.addView(rowLayout);
 
         mealsContainer.addView(itemCard);
+    }
+
+    // 3. DELETE Operation: Cleans specific nutrition log record path cleanly out of Firebase
+    private void deleteMealEntry(String mealId) {
+        db.collection("Users").document(userId)
+                .collection("Diet").document(mealId)
+                .delete()
+                .addOnSuccessListener(aVoid -> {
+                    Toast.makeText(DietPlanActivity.this, "Meal entry deleted successfully!", Toast.LENGTH_SHORT).show();
+                    fetchDietHistoryLogs(); // Refresh rendering metrics screen pipelines instantly
+                })
+                .addOnFailureListener(e -> Toast.makeText(DietPlanActivity.this, "Error removing nutrition log: " + e.getMessage(), Toast.LENGTH_SHORT).show());
     }
 
     private void openEntryForm(boolean editModeTrigger, String selectedMealId) {

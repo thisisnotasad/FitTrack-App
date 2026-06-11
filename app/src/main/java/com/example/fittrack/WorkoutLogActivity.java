@@ -135,7 +135,7 @@ public class WorkoutLogActivity extends AppCompatActivity {
         LinearLayout rowLayout = new LinearLayout(this);
         rowLayout.setOrientation(LinearLayout.HORIZONTAL);
         rowLayout.setPadding(32, 32, 32, 32);
-        rowLayout.setWeightSum(3f);
+        rowLayout.setWeightSum(4f); // Expanded sum weight to fit Edit and Delete comfortably
 
         // Texts Details Column Group
         LinearLayout textGroup = new LinearLayout(this);
@@ -166,15 +166,37 @@ public class WorkoutLogActivity extends AppCompatActivity {
         btnEdit.setTextSize(TypedValue.COMPLEX_UNIT_SP, 13);
         btnEdit.setBackgroundColor(Color.parseColor("#757575"));
         btnEdit.setTextColor(Color.WHITE);
-
-        // Clicking edit routes the selected data fields backward straight into form mode fields
         btnEdit.setOnClickListener(v -> openEntryForm(true, id));
+
+        // Action Delete Trigger Button Column Group
+        Button btnDelete = new Button(this);
+        LinearLayout.LayoutParams deleteParams = new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f);
+        deleteParams.setMargins(8, 0, 0, 0); // Give button tiny breathing room from edit button
+        btnDelete.setLayoutParams(deleteParams);
+        btnDelete.setText("Delete");
+        btnDelete.setTextSize(TypedValue.COMPLEX_UNIT_SP, 13);
+        btnDelete.setBackgroundColor(Color.parseColor("#C62828")); // Strong visible red accent
+        btnDelete.setTextColor(Color.WHITE);
+        btnDelete.setOnClickListener(v -> deleteWorkoutEntry(id));
 
         rowLayout.addView(textGroup);
         rowLayout.addView(btnEdit);
+        rowLayout.addView(btnDelete);
         itemCard.addView(rowLayout);
 
         listContainer.addView(itemCard);
+    }
+
+    // 3. DELETE Operation: Cleans specific workout out of the user pipeline completely
+    private void deleteWorkoutEntry(String recordId) {
+        db.collection("Users").document(userId)
+                .collection("Workouts").document(recordId)
+                .delete()
+                .addOnSuccessListener(aVoid -> {
+                    Toast.makeText(WorkoutLogActivity.this, "Workout deleted successfully!", Toast.LENGTH_SHORT).show();
+                    fetchWorkoutHistoryLogs(); // Instantly refresh data representation metrics
+                })
+                .addOnFailureListener(e -> Toast.makeText(WorkoutLogActivity.this, "Error deleting record: " + e.getMessage(), Toast.LENGTH_SHORT).show());
     }
 
     // Controls Layout Visibility States smoothly
@@ -209,7 +231,7 @@ public class WorkoutLogActivity extends AppCompatActivity {
         cardFormState.setVisibility(View.VISIBLE);
     }
 
-    // 2. CREATE & UPDATE Operation Commit Engine
+    // 4. CREATE & UPDATE Operation Commit Engine
     private void commitFormToFirestore() {
         String typeInput = etWorkoutType.getText().toString().trim();
         String durationInput = etDuration.getText().toString().trim();
